@@ -42,6 +42,7 @@ weights/stage3/*
 *.pt
 *.ckpt
 *.safetensors
+*.zip
 
 # Logs and temporary files
 *.log

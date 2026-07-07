@@ -64,8 +64,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--save_input", action="store_true")
     parser.add_argument("--save_original_size", action="store_true", help="Resize outputs back to each original input size before saving.")
     parser.add_argument("--skip_existing", action="store_true")
-    parser.add_argument("--tta", default="none", choices=["none", "d4"], help="Diffusion TTA. d4 = 4 rotations x horizontal flip, averaged after inverse transform.")
-    parser.add_argument("--refine_tta", default="none", choices=["none", "d4"], help="NAFNet refine TTA applied after diffusion prelim is averaged.")
+    parser.add_argument("--tta", default="none", choices=["none", "d4"], help="Stage2 TTA. d4 = 4 rotations x horizontal flip; each variant runs diffusion then NAFNet refine before averaging.")
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--num_shards", type=int, default=1)
     parser.add_argument("--shard_id", type=int, default=0)
@@ -138,45 +137,30 @@ def d4_variants() -> list[tuple[int, bool]]:
     return [(rotation, hflip) for rotation in range(4) for hflip in (False, True)]
 
 
-def infer_diffusion_with_tta(pipeline, cond, prior, prompt: str, beta: float, tta: str):
+def refine_once(refine_net, refine_head, prelim, cond, prior, residual_scale: float):
+    return apply_refine_residual(refine_net, refine_head, prelim, cond.float(), prior.float(), residual_scale)
+
+
+def infer_with_tta(pipeline, refine_net, refine_head, cond, prior, prompt: str, beta: float, residual_scale: float, tta: str):
     if tta == "none":
         prelim_pred = infer_diff_prelim(pipeline, cond, prior, prompt, beta)
-        return ((prelim_pred + 1.0) / 2.0).clamp(0.0, 1.0).float()
+        prelim = ((prelim_pred + 1.0) / 2.0).clamp(0.0, 1.0).float()
+        refined = refine_once(refine_net, refine_head, prelim, cond, prior, residual_scale)
+        return prelim, refined
 
     prelim_outputs = []
+    refined_outputs = []
     for rotation, hflip in d4_variants():
         cond_aug = apply_d4_transform(cond, rotation, hflip)
         prior_aug = apply_d4_transform(prior, rotation, hflip)
         prelim_pred = infer_diff_prelim(pipeline, cond_aug, prior_aug, prompt, beta)
         prelim_aug = ((prelim_pred + 1.0) / 2.0).clamp(0.0, 1.0).float()
+        refined_aug = refine_once(refine_net, refine_head, prelim_aug, cond_aug, prior_aug, residual_scale)
         prelim_outputs.append(invert_d4_transform(prelim_aug, rotation, hflip))
-    return torch.stack(prelim_outputs, dim=0).mean(dim=0).clamp(0.0, 1.0)
-
-
-def refine_with_tta(refine_net, refine_head, prelim, cond, prior, residual_scale: float, refine_tta: str):
-    if refine_tta == "none":
-        return apply_refine_residual(refine_net, refine_head, prelim, cond.float(), prior.float(), residual_scale)
-
-    refined_outputs = []
-    for rotation, hflip in d4_variants():
-        prelim_aug = apply_d4_transform(prelim, rotation, hflip)
-        cond_aug = apply_d4_transform(cond, rotation, hflip)
-        prior_aug = apply_d4_transform(prior, rotation, hflip)
-        refined_aug = apply_refine_residual(
-            refine_net,
-            refine_head,
-            prelim_aug,
-            cond_aug.float(),
-            prior_aug.float(),
-            residual_scale,
-        )
         refined_outputs.append(invert_d4_transform(refined_aug, rotation, hflip))
-    return torch.stack(refined_outputs, dim=0).mean(dim=0).clamp(0.0, 1.0)
 
-
-def infer_with_tta(pipeline, refine_net, refine_head, cond, prior, prompt: str, beta: float, residual_scale: float, tta: str, refine_tta: str):
-    prelim = infer_diffusion_with_tta(pipeline, cond, prior, prompt, beta, tta)
-    refined = refine_with_tta(refine_net, refine_head, prelim, cond, prior, residual_scale, refine_tta)
+    prelim = torch.stack(prelim_outputs, dim=0).mean(dim=0).clamp(0.0, 1.0)
+    refined = torch.stack(refined_outputs, dim=0).mean(dim=0).clamp(0.0, 1.0)
     return prelim, refined
 
 
@@ -231,8 +215,7 @@ def run_stage2_from_args(args):
     print(f"Prior: {prior_dir}")
     print(f"Output: {run_root}")
     print(f"Images: {len(images)} shard {args.shard_id}/{args.num_shards}")
-    print(f"Diffusion TTA: {args.tta}")
-    print(f"Refine TTA: {args.refine_tta}")
+    print(f"Stage2 TTA: {args.tta}")
     print(f"Device: {device} dtype={args.dtype}")
 
     pipeline = load_pipeline(pipeline_args, device, dtype)
@@ -279,7 +262,6 @@ def run_stage2_from_args(args):
                 args.beta,
                 args.residual_scale,
                 args.tta,
-                args.refine_tta,
             )
 
             save_size = original_size if args.save_original_size else None
@@ -338,7 +320,6 @@ def run_stage2(
     save_original_size=False,
     skip_existing=False,
     tta="none",
-    refine_tta="none",
     limit=None,
     num_shards=1,
     shard_id=0,
@@ -372,7 +353,6 @@ def run_stage2(
         save_original_size=save_original_size,
         skip_existing=skip_existing,
         tta=tta,
-        refine_tta=refine_tta,
         limit=limit,
         num_shards=num_shards,
         shard_id=shard_id,
