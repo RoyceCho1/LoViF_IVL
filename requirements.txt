@@ -1,0 +1,15 @@
+torch
+torchvision
+diffusers
+transformers
+accelerate
+qwen-vl-utils
+opencv-contrib-python
+timm
+einops
+numpy
+pillow
+tqdm
+safetensors
+huggingface_hub
+python-dateutil

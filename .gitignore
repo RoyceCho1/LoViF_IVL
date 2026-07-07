@@ -1,0 +1,49 @@
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Local environments and editor files
+.env
+.venv/
+venv/
+.idea/
+.vscode/
+
+# Runtime outputs
+result/*
+!result/.gitkeep
+
+# Data contents. Keep the directory layout with .gitkeep files if needed.
+data/test/LQ/*
+data/test/IS/*
+data/test/P_INT/*
+data/test/IS2/*
+data/test/drop_mask/*
+data/test/reflection_mask/*
+data/test/stage3_runs/*
+!data/test/LQ/.gitkeep
+!data/test/IS/.gitkeep
+!data/test/P_INT/.gitkeep
+!data/test/IS2/.gitkeep
+!data/test/drop_mask/.gitkeep
+!data/test/reflection_mask/.gitkeep
+!data/test/stage3_runs/.gitkeep
+
+# Weights are distributed separately.
+weights/stage1/*
+weights/stage2/*
+weights/stage3/*
+!weights/stage1/.gitkeep
+!weights/stage2/.gitkeep
+!weights/stage3/.gitkeep
+
+# Large model artifacts
+*.pth
+*.pt
+*.ckpt
+*.safetensors
+
+# Logs and temporary files
+*.log
+*.tmp
+.DS_Store
