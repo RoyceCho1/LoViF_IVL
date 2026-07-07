@@ -10,7 +10,6 @@ from __future__ import annotations
 import argparse
 import importlib
 import os
-import shutil
 import sys
 import time
 from contextlib import contextmanager
@@ -99,6 +98,7 @@ SETTINGS = {
         "device": "cuda",
         "dtype": "bf16",
         "tta": "d4",
+        "refine_tta": "d4",
         "save_prelim": False,
         "save_final": True,
         "save_input": False,
@@ -117,7 +117,7 @@ SETTINGS = {
         "chunksize": 8,
     },
     "stage3": {
-        "checkpoint": "weights/stage3/best_exp01_am.pth",
+        "checkpoint": "weights/stage3/ver02.pth",
         "batch_size": 1,
         "num_workers": 16,
         "max_observations": 2,
@@ -314,6 +314,7 @@ def run_stage2(paths: dict[str, Path | str], dry_run: bool) -> Path:
             save_original_size=cfg["save_original_size"],
             skip_existing=SETTINGS["skip_existing"],
             tta=cfg["tta"],
+            refine_tta=cfg["refine_tta"],
             limit=cfg["limit"],
             num_shards=cfg["num_shards"],
             shard_id=cfg["shard_id"],
@@ -396,19 +397,6 @@ def run_stage3(paths: dict[str, Path | str], dry_run: bool) -> Path:
         )
 
 
-def copy_images(source_dir: Path, result_dir: Path, dry_run: bool) -> Path:
-    print(f"[result] {source_dir} -> {result_dir}")
-    if dry_run:
-        return result_dir
-    result_dir.mkdir(parents=True, exist_ok=True)
-    for image_path in sorted(path for path in source_dir.rglob("*") if path.is_file() and path.suffix.lower() in IMAGE_EXTENSIONS):
-        rel = image_path.relative_to(source_dir)
-        out_path = result_dir / rel
-        out_path.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(image_path, out_path)
-    return result_dir
-
-
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run FUMO final inference pipeline.")
     parser.add_argument("--stage", choices=VALID_STAGES, default=None, help="Run only one stage.")
@@ -445,9 +433,8 @@ def main() -> None:
             lambda: run_p_int(paths, args.dry_run),
             timing,
         )
-    stage2_dir = None
     if "stage2" in stages:
-        stage2_dir = timed_stage(
+        timed_stage(
             "stage2",
             count_images(paths["is_dir"], SETTINGS["recursive"]),
             lambda: run_stage2(paths, args.dry_run),
@@ -462,9 +449,8 @@ def main() -> None:
             timing,
         )
 
-    stage3_run_dir = None
     if "stage3" in stages:
-        stage3_run_dir = timed_stage(
+        timed_stage(
             "stage3",
             count_images(paths["is2_dir"], SETTINGS["recursive"]),
             lambda: run_stage3(paths, args.dry_run),
