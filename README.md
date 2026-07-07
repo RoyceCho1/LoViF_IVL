@@ -11,8 +11,28 @@ LQ -> stage1(IS) -> P_INT -> stage2(IS2) -> make_mask -> stage3 -> result
 ```bash
 conda create -n lovif python=3.10 -y
 conda activate lovif
+
+# Install PyTorch first. The default command is for the CUDA wheel used on our RTX 5090 setup.
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
+
+# Install the remaining packages.
 pip install -r requirements.txt
 ```
+
+Check that PyTorch can use CUDA:
+
+```bash
+python - <<'PY'
+import torch
+print("torch:", torch.__version__)
+print("cuda build:", torch.version.cuda)
+print("cuda available:", torch.cuda.is_available())
+if torch.cuda.is_available():
+    print("gpu:", torch.cuda.get_device_name(0))
+PY
+```
+
+If `cuda available` is `False`, reinstall `torch` and `torchvision` with the CUDA wheel that matches your machine from https://pytorch.org/get-started/locally/.
 
 Check Qwen3-VL support:
 
