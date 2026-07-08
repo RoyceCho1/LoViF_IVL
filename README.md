@@ -99,6 +99,21 @@ Final output PNGs are written to:
 result/
 ```
 
+## Runtime Note
+
+`P_INT` generation uses Qwen3-VL, so its runtime can vary significantly depending on the GPU. On our RTX 5090 setup, `P_INT` generation takes about 2.8 seconds per image.
+
+## Overwrite / Resume
+
+`SETTINGS["skip_existing"]` in `main_inference.py` controls all generated outputs:
+
+```python
+"skip_existing": False  # regenerate and overwrite existing outputs
+"skip_existing": True   # skip outputs that already exist when the stage supports it
+```
+
+This setting is shared by stage1, P_INT, stage2, and mask generation.
+
 ## Run
 
 Check paths and stages without running models:

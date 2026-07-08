@@ -76,7 +76,6 @@ SETTINGS = {
         "model_family": "qwen3",
         "max_workers": 1,
         "max_long_side": 99999,
-        "overwrite": False,
     },
     "stage2": {
         "run_name": "",
@@ -112,13 +111,12 @@ SETTINGS = {
         "threshold": 20.0,
         "threshold_percentile": 95.0,
         "median_size": 3,
-        "overwrite": False,
         "chunksize": 8,
     },
     "stage3": {
         "checkpoint": "weights/stage3/ver02.pth",
         "batch_size": 1,
-        "num_workers": 16,
+        "num_workers": 1,
         "max_observations": 2,
         "pad_to_max_observations": 2,
         "min_scene_observations": None,
@@ -228,6 +226,10 @@ def ensure_layout(paths: dict[str, Path | str]) -> None:
         path.mkdir(parents=True, exist_ok=True)
 
 
+def overwrite_outputs() -> bool:
+    return not SETTINGS["skip_existing"]
+
+
 def stage1_checkpoint() -> Path:
     return resolve_path(SETTINGS["stage1"]["checkpoint"])
 
@@ -272,7 +274,7 @@ def run_p_int(paths: dict[str, Path | str], dry_run: bool) -> Path:
             model_path=cfg["model_path"],
             model_family=cfg["model_family"],
             recursive=SETTINGS["recursive"],
-            overwrite=cfg["overwrite"],
+            overwrite=overwrite_outputs(),
             max_workers=cfg["max_workers"],
             max_long_side=cfg["max_long_side"],
         )
@@ -337,7 +339,7 @@ def run_make_mask(paths: dict[str, Path | str], dry_run: bool) -> Path:
             threshold=cfg["threshold"],
             threshold_percentile=cfg["threshold_percentile"],
             median_size=cfg["median_size"],
-            overwrite=cfg["overwrite"],
+            overwrite=overwrite_outputs(),
             num_workers=cfg["num_workers"],
             chunksize=cfg["chunksize"],
         )
@@ -350,7 +352,7 @@ def run_make_mask(paths: dict[str, Path | str], dry_run: bool) -> Path:
             threshold=cfg["threshold"],
             threshold_percentile=cfg["threshold_percentile"],
             median_size=cfg["median_size"],
-            overwrite=cfg["overwrite"],
+            overwrite=overwrite_outputs(),
             num_workers=cfg["num_workers"],
             chunksize=cfg["chunksize"],
         )

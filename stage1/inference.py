@@ -70,13 +70,30 @@ def save_output(tensor: torch.Tensor, out_path: Path, model_size: Tuple[int, int
 def tta_transforms(mode: str):
     if mode == "none":
         return [(lambda x: x, lambda y: y)]
-    transforms = [
+    x4_transforms = [
         (lambda x: x, lambda y: y),
         (lambda x: torch.flip(x, dims=[-1]), lambda y: torch.flip(y, dims=[-1])),
         (lambda x: torch.flip(x, dims=[-2]), lambda y: torch.flip(y, dims=[-2])),
         (lambda x: torch.flip(x, dims=[-2, -1]), lambda y: torch.flip(y, dims=[-2, -1])),
     ]
     if mode == "x4":
+        return x4_transforms
+    if mode == "d4":
+        transforms = []
+        for rotation in range(4):
+            for hflip in (False, True):
+                def augment(x, rotation=rotation, hflip=hflip):
+                    y = torch.rot90(x, k=rotation, dims=(-2, -1))
+                    if hflip:
+                        y = torch.flip(y, dims=[-1])
+                    return y
+
+                def deaugment(y, rotation=rotation, hflip=hflip):
+                    if hflip:
+                        y = torch.flip(y, dims=[-1])
+                    return torch.rot90(y, k=(-rotation) % 4, dims=(-2, -1))
+
+                transforms.append((augment, deaugment))
         return transforms
     raise ValueError(f"unknown TTA mode: {mode}")
 
@@ -108,7 +125,7 @@ def parse_args():
     parser.add_argument("--batch-size", "--bs", type=int, default=1)
     parser.add_argument("--resize-long-edge", type=int, default=None)
     parser.add_argument("--amp", action="store_true")
-    parser.add_argument("--tta", choices=["none", "x4"], default="none")
+    parser.add_argument("--tta", choices=["none", "x4", "d4"], default="none")
     parser.add_argument("--recursive", action="store_true")
     parser.add_argument("--skip-existing", action="store_true")
     parser.add_argument("--unsafe-load", action="store_true")
