@@ -58,7 +58,9 @@ hf auth login
 
 ## Weights
 
-Download the separately provided weights and place them here:
+Weights are provided separately because of file size. The expected structure is the same as the `weights/` directory in this package.
+
+If you receive `weights.zip`, extract it at the project root so that the paths below exist directly under `weights/`:
 
 ```text
 weights/
@@ -66,14 +68,18 @@ weights/
     best_ckpt
   stage2/
     controlnet/
+      config.json
+      diffusion_pytorch_model.safetensors
     unet/
+      config.json
+      diffusion_pytorch_model.safetensors
     nafnet_refine.pth
     nafnet_refine_head.pth
   stage3/
-    latest.pth
+    best.pth
 ```
 
-If you want to use a different stage3 checkpoint, update `SETTINGS["stage3"]["checkpoint"]` in `main_inference.py`.
+You can also place the files manually as long as the same paths and filenames are preserved. These paths are used by `main_inference.py`.
 
 ## Input
 
@@ -105,14 +111,14 @@ result/
 
 ## Overwrite / Resume
 
-`SETTINGS["skip_existing"]` in `main_inference.py` controls all generated outputs:
+`SETTINGS["skip_existing"]` in `main_inference.py` controls whether existing generated files are reused or regenerated.
 
 ```python
-"skip_existing": False  # regenerate and overwrite existing outputs
-"skip_existing": True   # skip outputs that already exist when the stage supports it
+"skip_existing": False  # overwrite existing generated outputs
+"skip_existing": True   # reuse existing outputs when possible
 ```
 
-This setting is shared by stage1, P_INT, stage2, and mask generation.
+This setting is shared by stage1, P_INT, stage2, and mask generation. Use `False` when you want to rerun the full pipeline from the current inputs and settings.
 
 ## Run
 

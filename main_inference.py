@@ -114,7 +114,7 @@ SETTINGS = {
         "chunksize": 8,
     },
     "stage3": {
-        "checkpoint": "weights/stage3/ver02.pth",
+        "checkpoint": "weights/stage3/best.pth",
         "batch_size": 1,
         "num_workers": 1,
         "max_observations": 2,
