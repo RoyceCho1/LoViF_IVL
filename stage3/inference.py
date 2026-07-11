@@ -931,7 +931,7 @@ def run_stage3(
     checkpoint="weights/stage3",
     data="data",
     split="test",
-    output_root="data/test/stage3_runs",
+    output_root="outputs",
     final_dir=None,
     save_run_artifacts=True,
     batch_size=1,

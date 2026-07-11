@@ -60,6 +60,8 @@ hf auth login
 
 Weights are provided separately because of file size. The expected structure is the same as the `weights/` directory in this package.
 
+Weights are available here: [Google Drive](https://drive.google.com/drive/folders/19a4FNc54ase259l22RUy9o4IPlF-3xYa?usp=drive_link)
+
 If you receive `weights.zip`, extract it at the project root so that the paths below exist directly under `weights/`:
 
 ```text

@@ -51,7 +51,7 @@ SETTINGS = {
     "run_stages": ["stage1", "p_int", "stage2", "make_mask", "stage3"],
     "cuda_visible_devices": "0",
     "recursive": False,
-    "skip_existing": False,
+    "skip_existing": True,
     "paths": {
         "data_root": "data",
         "split": "test",
