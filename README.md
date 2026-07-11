@@ -60,7 +60,7 @@ hf auth login
 
 Weights are provided separately because of file size. The expected structure is the same as the `weights/` directory in this package.
 
-Weights are available here: [Google Drive](https://drive.google.com/drive/folders/19a4FNc54ase259l22RUy9o4IPlF-3xYa?usp=drive_link)
+Weights are available here: [Google Drive](https://drive.google.com/file/d/10zDKbZ0-dxmXfgLg_aZ4xGBCvmXaNm0l/view?usp=drive_link)
 
 If you receive `weights.zip`, extract it at the project root so that the paths below exist directly under `weights/`:
 
@@ -84,6 +84,8 @@ weights/
 You can also place the files manually as long as the same paths and filenames are preserved. These paths are used by `main_inference.py`.
 
 ## Input
+
+The final test data can be downloaded here: [Google Drive](https://drive.google.com/file/d/1xmeKQ_9P0ej-GJEckmfCQySFc2knZOIS/view?usp=drive_link)
 
 Put input images in:
 
